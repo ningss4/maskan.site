@@ -18,11 +18,11 @@
 <meta property="og:site_name" content="Maskan">
 <meta property="og:title" content="Maskan – Immobilier au Maroc : vente, location et rahn">
 <meta property="og:description" content="Trouvez un bien dans toutes les villes du Maroc, ou publiez votre annonce gratuitement.">
-<meta property="og:image" content="https://ningss4.github.io/maskan/og-image.png">
+<meta property="og:image" content="https://ningss4.github.io/maskan.site/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://ningss4.github.io/maskan/og-image.png">
+<meta name="twitter:image" content="https://ningss4.github.io/maskan.site/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -165,6 +165,7 @@ dialog::backdrop{background:rgba(10,30,36,.6)}
   .nav .btn{padding:8px 11px;font-size:.88rem}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+.how{padding-inline-start:20px;display:grid;gap:10px;margin:4px 0 14px;max-width:60ch}
 </style>
 </head>
 <body>
@@ -177,7 +178,7 @@ dialog::backdrop{background:rgba(10,30,36,.6)}
         Maskan
       </a>
       <div class="nav-actions">
-        <button class="btn btn-outline" id="installBtn" hidden>⬇ Installer l'application</button>
+        <button class="btn btn-outline" id="installBtn">⬇ Installer l'application</button>
         <button class="btn btn-saffron" id="openPost">+ Publier une annonce</button>
       </div>
     </nav>
@@ -265,6 +266,20 @@ dialog::backdrop{background:rgba(10,30,36,.6)}
 <!-- Fenêtre : détail -->
 <dialog id="viewDlg" aria-labelledby="viewTitle">
   <div class="dlg" id="viewBody"></div>
+</dialog>
+
+<!-- Fenêtre : installer l'application -->
+<dialog id="installDlg" aria-labelledby="installTitle">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="installTitle">Installer Maskan</h2><button type="button" class="x" data-close aria-label="Fermer">×</button></div>
+    <ul class="how">
+      <li><b>Android (Chrome)</b> : menu ⋮ puis « Installer l'application ».</li>
+      <li><b>iPhone (Safari)</b> : bouton Partager, puis « Sur l'écran d'accueil ».</li>
+      <li><b>Ordinateur (Chrome, Edge, Brave)</b> : icône d'installation dans la barre d'adresse, ou menu ⋮ puis « Installer la page en tant qu'application ».</li>
+    </ul>
+    <p class="hint">L'application s'ouvre ensuite en plein écran, sans la barre du navigateur.</p>
+    <div class="actions"><button type="button" class="btn btn-teal" data-close>Compris</button></div>
+  </div>
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -533,13 +548,17 @@ if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
 let deferredInstall=null;
 const installBtn=$("#installBtn");
 const isStandalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;installBtn.hidden=false;});
+if(isStandalone)installBtn.hidden=true;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;});
 window.addEventListener("appinstalled",()=>{installBtn.hidden=true;deferredInstall=null;});
-if(isIOS&&!isStandalone)installBtn.hidden=false;
 installBtn.addEventListener("click",async()=>{
-  if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;installBtn.hidden=true;}
-  else if(isIOS){alert("Dans Safari : touchez le bouton Partager (le carré avec la flèche), puis « Sur l'écran d'accueil ».");}
+  if(deferredInstall){
+    const d=deferredInstall; deferredInstall=null; d.prompt();
+    const r=await d.userChoice;
+    if(r.outcome==="accepted")installBtn.hidden=true;
+  }else{
+    $("#installDlg").showModal();
+  }
 });
 
 loadListings();
